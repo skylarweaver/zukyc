@@ -9,7 +9,7 @@ export type GovUser = {
   dateOfBirth: bigint;
   idNumber: string;
   socialSecurityNumber: string;
-  securityClearance: string;
+  securityClearance: bigint;
 };
 
 export async function getGovUserByEmail(
@@ -27,7 +27,7 @@ export async function getGovUserByEmail(
   }) as Date;
   const idNumber = chance.string({ pool: "0123456789", length: 7 });
   const ssn = await getSSNByEmail(email);
-  const securityClearance = "5"; // chance.integer({ min: 0, max: 10 });
+  const securityClearance = BigInt(5); // chance.integer({ min: 0, max: 10 });
 
   return {
     email,

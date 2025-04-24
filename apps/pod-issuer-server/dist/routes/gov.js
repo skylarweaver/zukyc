@@ -62,7 +62,7 @@ gov.post("/issue", (0, express_jwt_1.expressjwt)({
                 value: user.socialSecurityNumber
             },
             securityClearance: {
-                type: "string",
+                type: "int",
                 value: user.securityClearance
             },
             owner: {

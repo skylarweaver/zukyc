@@ -73,7 +73,7 @@ gov.post(
             value: user.socialSecurityNumber
           },
           securityClearance: {
-            type: "string",
+            type: "int",
             value: user.securityClearance
           },
           owner: {

@@ -18,7 +18,7 @@ async function getGovUserByEmail(email) {
     });
     const idNumber = shared_1.chance.string({ pool: "0123456789", length: 7 });
     const ssn = await (0, shared_1.getSSNByEmail)(email);
-    const securityClearance = "5"; // chance.integer({ min: 0, max: 10 });
+    const securityClearance = BigInt(5); // chance.integer({ min: 0, max: 10 });
     return {
         email,
         firstName: lodash_1.default.upperFirst(names[0]),

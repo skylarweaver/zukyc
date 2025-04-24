@@ -28,10 +28,16 @@ const getDates = (now: Date) => {
 
   const eighteenYearsAgo = new Date(now);
   eighteenYearsAgo.setFullYear(now.getFullYear() - 18);
+  
+  // Add calculation for 30 days ago
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - 30);
+  
   return {
     oneWeekAgo,
     oneYearAgo,
-    eighteenYearsAgo
+    eighteenYearsAgo,
+    thirtyDaysAgo
   };
 };
 
@@ -57,15 +63,25 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
           // Prove the presence of an entry called "dateOfBirth", hide its value.
           // and prove that it is <= the timestamp of eight years ago.
           // Because we would like to prove that the ID holder is at least 18 years old.
-          dateOfBirth: {
-            isRevealed: false,
-            inRange: {
-              min: POD_INT_MIN,
-              max: BigInt(dates.eighteenYearsAgo.getTime())
-            }
-          },
+          // dateOfBirth: {
+          //   isRevealed: false,
+          //   inRange: {
+          //     min: POD_INT_MIN,
+          //     max: BigInt(dates.eighteenYearsAgo.getTime())
+          //   }
+          // },
           // Prove the presence of an entry called "socialSecurityNumber", hide its value
           socialSecurityNumber: { isRevealed: false },
+
+          // QUESTION: do i need to do a range check also on classificationLevel?
+          securityClearance: { 
+            isRevealed: false,
+            lessThanEq: "paystub.classificationLevel",
+            inRange: {
+              min: BigInt(0),
+              max: BigInt(10)
+            }
+          },
           // Prove the presence of an entry called "owner", hide its value, and prove
           // that I own the corresponding Semaphore identity secrets.
           owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
@@ -75,38 +91,53 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
         entries: {
           // Prove the presence of an entry called "socialSecurityNumber", hide its value,
           // and prove that it equals to the socialSecurityNumber in the govID POD.
-          socialSecurityNumber: {
-            isRevealed: false,
-            equalsEntry: "govID.socialSecurityNumber"
-          },
+          // socialSecurityNumber: {
+          //   isRevealed: false,
+          //   equalsEntry: "govID.socialSecurityNumber"
+          // },
           // Prove the presence of an entry called "startDate", hide its value,
           // and prove that it is <= the timestamp of one year ago.
           // Because we would like to prove that the paystub holder has at least
           // one year of consistent employment with this current employer.
-          startDate: {
-            isRevealed: false,
-            inRange: {
-              min: POD_INT_MIN,
-              max: BigInt(dates.oneYearAgo.getTime())
-            }
-          },
-          // Prove the presence of an entry called "issueDate", hide its value,
+          // startDate: {
+          //   isRevealed: false,
+          //   inRange: {
+          //     min: POD_INT_MIN,
+          //     max: BigInt(dates.oneYearAgo.getTime())
+          //   }
+          // },
+          // // Prove the presence of an entry called "issueDate", hide its value,
           // and prove that it is >= the timestamp of one week ago.
           // Because we would like to prove the paystub holder is still employed
           // by the current employer at least a week ago.
-          issueDate: {
-            isRevealed: false,
-            inRange: {
-              min: BigInt(dates.oneWeekAgo.getTime()),
-              max: POD_INT_MAX
-            }
-          },
+          // issueDate: {
+          //   isRevealed: false,
+          //   inRange: {
+          //     min: BigInt(dates.oneWeekAgo.getTime()),
+          //     max: POD_INT_MAX
+          //   }
+          // },
           // Prove the presence of an entry called "annualSalary", hide its value,
           // and prove that it is >= 20000
-          annualSalary: {
+          // annualSalary: {
+          //   isRevealed: false,
+          //   inRange: { min: 20000n, max: POD_INT_MAX }
+          // },
+
+          classificationLevel: {
             isRevealed: false,
-            inRange: { min: 20000n, max: POD_INT_MAX }
+            inRange: {
+              min: BigInt(0),
+              max: BigInt(10)
+            }
           },
+          // authorizationDate: {
+          //   isRevealed: false,
+          //   inRange: {
+          //     min: BigInt(dates.thirtyDaysAgo.getTime()),
+          //     max: POD_INT_MAX
+          //   }
+          // },
           // Prove the presence of an entry called "owner", hide its value, and prove
           // that I own the corresponding Semaphore identity secrets.
           owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
@@ -131,7 +162,7 @@ export const makeProofRequest = (now: Date): ProofRequest => {
   // We can optionally ask to generate a nullifier, which is tied to the user's
   // identity and to the external nullifier value here. This can be used
   // to identify duplicate proofs without de-anonymizing.
-  const externalNullifier: PODValue = { type: "string", value: "ZooKyc" };
+  const externalNullifier: PODValue = { type: "string", value: "ZooKyc2" };
 
   // Watermark will be included in the resulting proof. It allows identifying a proof as tied
   // to a specific use case to avoid reuse.
