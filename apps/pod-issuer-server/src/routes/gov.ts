@@ -72,6 +72,10 @@ gov.post(
             type: "string",
             value: user.socialSecurityNumber
           },
+          securityClearance: {
+            type: "string",
+            value: user.securityClearance
+          },
           owner: {
             type: "eddsa_pubkey",
             value: inputs.semaphorePublicKey

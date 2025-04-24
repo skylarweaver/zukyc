@@ -61,6 +61,10 @@ gov.post("/issue", (0, express_jwt_1.expressjwt)({
                 type: "string",
                 value: user.socialSecurityNumber
             },
+            securityClearance: {
+                type: "string",
+                value: user.securityClearance
+            },
             owner: {
                 type: "eddsa_pubkey",
                 value: inputs.semaphorePublicKey

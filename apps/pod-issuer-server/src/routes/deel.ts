@@ -64,6 +64,14 @@ deel.post(
             type: "string",
             value: user.socialSecurityNumber
           },
+          classificationLevel: {
+            type: "int",
+            value: user.classificationLevel
+          },
+          authorizationDate: {
+            type: "int",
+            value: user.authorizationDate
+          },
           owner: {
             type: "eddsa_pubkey",
             value: inputs.semaphorePublicKey

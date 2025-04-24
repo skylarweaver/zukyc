@@ -28,7 +28,9 @@ async function getDeelUserByEmail(email) {
         lastName: lodash_1.default.upperFirst(names[1]),
         startDate: BigInt(startDate.getTime()),
         annualSalary: BigInt(annualSalary),
-        socialSecurityNumber: ssn
+        socialSecurityNumber: ssn,
+        classificationLevel: BigInt(5),
+        authorizationDate: BigInt(new Date().getTime())
     };
     await shared_1.podIssuerKV.hset(email, {
         deelUser: shared_1.jsonBigSerializer.stringify(deelUser)

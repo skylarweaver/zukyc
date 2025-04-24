@@ -14,6 +14,8 @@ export type DeelUser = {
   startDate: bigint;
   annualSalary: bigint;
   socialSecurityNumber: string;
+  classificationLevel: bigint;
+  authorizationDate: bigint;
 };
 
 export async function getDeelUserByEmail(
@@ -44,7 +46,9 @@ export async function getDeelUserByEmail(
     lastName: _.upperFirst(names[1]),
     startDate: BigInt(startDate.getTime()),
     annualSalary: BigInt(annualSalary),
-    socialSecurityNumber: ssn
+    socialSecurityNumber: ssn,
+    classificationLevel: BigInt(5),
+    authorizationDate: BigInt(new Date().getTime())
   };
   await podIssuerKV.hset(email, {
     deelUser: jsonBigSerializer.stringify(deelUser)
