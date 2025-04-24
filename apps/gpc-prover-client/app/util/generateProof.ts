@@ -17,14 +17,14 @@ import { Identity } from "@semaphore-protocol/identity";
 export type ProofRequest = {
   proofConfig: GPCProofConfig;
   membershipLists: PODMembershipLists;
-  externalNullifier: PODValue;
+  externalNullifier: PODValue | null;
   watermark: PODValue;
 };
 
 const prove = async (
   identity: Identity,
   idPOD: POD,
-  paystubPOD: POD,
+  frogPOD: POD,
   proofRequest: ProofRequest
 ) => {
   // https://docs.pcd.team/types/_pcd_gpc.GPCProofInputs.html
@@ -35,7 +35,7 @@ const prove = async (
       // The name "govID" here matches this POD with the config.
       govID: idPOD,
       // The name "paystub" here matches this POD with the config.
-      paystub: paystubPOD
+      frogPod: frogPOD
     },
     owner: {
       // The user's private identity info. It's never revealed in the
@@ -45,8 +45,8 @@ const prove = async (
       // We can optionally ask to generate a nullifier, which is tied to the user's
       // identity and to the external nullifier value here. This can be used
       // to identify duplicate proofs without de-anonymizing.
-      // Here, We don't want the same user to get more than one loan.
-      externalNullifier: proofRequest.externalNullifier
+      // Only include externalNullifier if it's provided
+      ...(proofRequest.externalNullifier && { externalNullifier: proofRequest.externalNullifier })
     },
     // Named lists of values for each list (non-)membership check.
     // The names assigned here are ussed to link these lists to their (non-)membership
@@ -82,21 +82,21 @@ const prove = async (
 export const generateProof = async (
   identity: Identity,
   serializedIDPOD: string,
-  serializedPaystubPOD: string,
+  serializedFrogPOD: string,
   serializedProofRequest: string
 ) => {
   if (!serializedIDPOD) {
     throw new Error("ID POD field cannot be empty!");
   }
-  if (!serializedPaystubPOD) {
-    throw new Error("Paystub POD field cannot be empty!");
+  if (!serializedFrogPOD) {
+    throw new Error("Frog POD field cannot be empty!");
   }
   if (!serializedProofRequest) {
     throw new Error("Proof quest field cannot be empty!");
   }
 
   const idPOD = POD.fromJSON(JSON.parse(serializedIDPOD));
-  const paystubPOD = POD.fromJSON(JSON.parse(serializedPaystubPOD));
+  const frogPOD = POD.fromJSON(JSON.parse(serializedFrogPOD));
 
   const jsonProofRequest = JSON.parse(serializedProofRequest);
   const proofRequest = {
@@ -104,14 +104,14 @@ export const generateProof = async (
     membershipLists: podMembershipListsFromJSON(
       jsonProofRequest.membershipLists
     ),
-    externalNullifier: podValueFromJSON(jsonProofRequest.externalNullifier),
+    externalNullifier: jsonProofRequest.externalNullifier ? podValueFromJSON(jsonProofRequest.externalNullifier) : null,
     watermark: podValueFromJSON(jsonProofRequest.watermark)
   };
 
   const { proof, boundConfig, revealedClaims } = await prove(
     identity,
     idPOD,
-    paystubPOD,
+    frogPOD,
     proofRequest
   );
 

@@ -77,9 +77,11 @@ export const verifyProof = async (
     throw new Error("Please make sure your ID POD is signed by ZooGov");
   }
   if (
-    vClaims.pods.paystub?.signerPublicKey !==
-    process.env.NEXT_PUBLIC_DEEL_EDDSA_PUBLIC_KEY
+    vClaims.pods.frogPod?.signerPublicKey !==
+    process.env.NEXT_PUBLIC_FROG_EDDSA_PUBLIC_KEY
   ) {
+    console.log("FrogPod signer:", vClaims.pods.frogPod?.signerPublicKey);
+    console.log("FrogEDDSA Public Key:", process.env.NEXT_PUBLIC_FROG_EDDSA_PUBLIC_KEY);
     throw new Error("Please make sure your ID POD is signed by ZooDeel");
   }
 
@@ -88,24 +90,27 @@ export const verifyProof = async (
     throw new Error("Watermark does not match");
   }
 
-  // Checks the nullifer, we don't want the same user to get more than one loan.
-  if (
-    !_.isEqual(vClaims.owner?.externalNullifier, proofRequest.externalNullifier)
-  ) {
-    throw new Error(
-      `Invalid external nullifier value, make sure it is ${proofRequest.externalNullifier}`
-    );
-  }
-  // This check has side-effects (recording the nullifierHash which indicates that the
-  // user got a loan). Therefore it should be the last thing to happen after all the
-  // other checks are successful.
-  if (vClaims.owner?.nullifierHashV4 === undefined) {
-    throw new Error(`Nullfier hash should not be empty`);
-  }
-  if (!(await tryRecordNullifierHash(vClaims.owner?.nullifierHashV4))) {
-    throw new Error(
-      `Your proof is valid. But we've got a proof from you before. You cannot get more than one loan. See ${window.location.origin}/debug.`
-    );
+  // Skip nullifier checks if externalNullifier is null
+  if (proofRequest.externalNullifier !== null) {
+    // Checks the nullifer, we don't want the same user to get more than one loan.
+    if (
+      !_.isEqual(vClaims.owner?.externalNullifier, proofRequest.externalNullifier)
+    ) {
+      throw new Error(
+        `Invalid external nullifier value, make sure it is ${proofRequest.externalNullifier}`
+      );
+    }
+    // This check has side-effects (recording the nullifierHash which indicates that the
+    // user got a loan). Therefore it should be the last thing to happen after all the
+    // other checks are successful.
+    if (vClaims.owner?.nullifierHashV4 === undefined) {
+      throw new Error(`Nullfier hash should not be empty`);
+    }
+    if (!(await tryRecordNullifierHash(vClaims.owner?.nullifierHashV4))) {
+      throw new Error(
+        `Your proof is valid. But we've got a proof from you before. You cannot get more than one loan. See ${window.location.origin}/debug.`
+      );
+    }
   }
 
   return true;

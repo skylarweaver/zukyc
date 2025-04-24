@@ -14,7 +14,7 @@ import { POD_INT_MIN, POD_INT_MAX, PODValue, podValueToJSON } from "@pcd/pod";
 export type ProofRequest = {
   proofConfig: GPCProofConfig;
   membershipLists: PODMembershipLists;
-  externalNullifier: PODValue;
+  externalNullifier: PODValue | null;
   watermark: PODValue;
 };
 
@@ -33,11 +33,15 @@ const getDates = (now: Date) => {
   const thirtyDaysAgo = new Date(now);
   thirtyDaysAgo.setDate(now.getDate() - 30);
   
+  const twentyOneYearsAgo = new Date(now);
+  twentyOneYearsAgo.setFullYear(now.getFullYear() - 21);
+
   return {
     oneWeekAgo,
     oneYearAgo,
     eighteenYearsAgo,
-    thirtyDaysAgo
+    thirtyDaysAgo,
+    twentyOneYearsAgo 
   };
 };
 
@@ -54,7 +58,8 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
         entries: {
           // Prove the presence of an entry called "idNumber", hide its value,
           // and also prove that it is not a member of the sanctionsList.
-          idNumber: { isRevealed: false, isNotMemberOf: "sanctionsList" },
+          // idNumber: { isRevealed: false, isNotMemberOf: "sanctionsList" },
+
           // There's an entry "firstName" in the govID POD. Because it is not
           // specified here, it will be ignored, meaning that the proof says nothiing
           // about the entry, and the entry won't be in the revealed claims.
@@ -63,31 +68,31 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
           // Prove the presence of an entry called "dateOfBirth", hide its value.
           // and prove that it is <= the timestamp of eight years ago.
           // Because we would like to prove that the ID holder is at least 18 years old.
-          // dateOfBirth: {
-          //   isRevealed: false,
-          //   inRange: {
-          //     min: POD_INT_MIN,
-          //     max: BigInt(dates.eighteenYearsAgo.getTime())
-          //   }
-          // },
-          // Prove the presence of an entry called "socialSecurityNumber", hide its value
-          socialSecurityNumber: { isRevealed: false },
-
-          // QUESTION: do i need to do a range check also on classificationLevel?
-          securityClearance: { 
+          dateOfBirth: {
             isRevealed: false,
-            lessThanEq: "paystub.classificationLevel",
             inRange: {
-              min: BigInt(0),
-              max: BigInt(10)
+              min: POD_INT_MIN,
+              max: BigInt(dates.twentyOneYearsAgo.getTime())
             }
           },
+          // Prove the presence of an entry called "socialSecurityNumber", hide its value
+          // socialSecurityNumber: { isRevealed: false },
+
+          // QUESTION: do i need to do a range check also on classificationLevel?
+          // securityClearance: { 
+          //   isRevealed: false,
+          //   lessThanEq: "paystub.classificationLevel",
+          //   inRange: {
+          //     min: BigInt(0),
+          //     max: BigInt(10)
+          //   }
+          // },
           // Prove the presence of an entry called "owner", hide its value, and prove
           // that I own the corresponding Semaphore identity secrets.
-          owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
+          // owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
         }
       },
-      paystub: {
+      frogPod: {
         entries: {
           // Prove the presence of an entry called "socialSecurityNumber", hide its value,
           // and prove that it equals to the socialSecurityNumber in the govID POD.
@@ -113,8 +118,8 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
           // issueDate: {
           //   isRevealed: false,
           //   inRange: {
-          //     min: BigInt(dates.oneWeekAgo.getTime()),
-          //     max: POD_INT_MAX
+          //     min: POD_INT_MIN,
+          //     max: BigInt(dates.twentyOneYearsAgo.getTime())
           //   }
           // },
           // Prove the presence of an entry called "annualSalary", hide its value,
@@ -124,10 +129,10 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
           //   inRange: { min: 20000n, max: POD_INT_MAX }
           // },
 
-          classificationLevel: {
+          speed: {
             isRevealed: false,
             inRange: {
-              min: BigInt(0),
+              min: BigInt(5),
               max: BigInt(10)
             }
           },
@@ -140,7 +145,7 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
           // },
           // Prove the presence of an entry called "owner", hide its value, and prove
           // that I own the corresponding Semaphore identity secrets.
-          owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
+          // owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
         }
       }
     }
@@ -152,17 +157,19 @@ export const makeProofRequest = (now: Date): ProofRequest => {
   // There's an isNotMemberOf check for govID POD entry idNumber in the proofConfig.
   // This lists has to be both in the proof inputs and the revealed claims.
   const membershipLists: PODMembershipLists = {
-    sanctionsList: [
-      { type: "string", value: "G2345678" },
-      { type: "string", value: "G1987654" },
-      { type: "string", value: "G1657678" }
-    ]
+    // sanctionsList: [
+    //   { type: "string", value: "G2345678" },
+    //   { type: "string", value: "G1987654" },
+    //   { type: "string", value: "G1657678" }
+    // ]
   };
 
   // We can optionally ask to generate a nullifier, which is tied to the user's
   // identity and to the external nullifier value here. This can be used
   // to identify duplicate proofs without de-anonymizing.
-  const externalNullifier: PODValue = { type: "string", value: "ZooKyc2" };
+  // const externalNullifier: PODValue = { type: "string", value: "ZooKyc3" };
+  // If we don't want to use a nullifier, set it to null
+  const externalNullifier = null;
 
   // Watermark will be included in the resulting proof. It allows identifying a proof as tied
   // to a specific use case to avoid reuse.
@@ -187,7 +194,7 @@ export const serializeProofRequest = (proofRequest: ProofRequest): string => {
     {
       proofConfig: proofConfigToJSON(proofRequest.proofConfig),
       membershipLists: podMembershipListsToJSON(proofRequest.membershipLists),
-      externalNullifier: podValueToJSON(proofRequest.externalNullifier),
+      externalNullifier: proofRequest.externalNullifier ? podValueToJSON(proofRequest.externalNullifier) : null,
       watermark: podValueToJSON(proofRequest.watermark)
     },
     null,
