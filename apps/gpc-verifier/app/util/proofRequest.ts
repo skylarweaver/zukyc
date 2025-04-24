@@ -145,7 +145,7 @@ const makeProofConfig = (now: Date): GPCProofConfig => {
           // },
           // Prove the presence of an entry called "owner", hide its value, and prove
           // that I own the corresponding Semaphore identity secrets.
-          // owner: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
+          ownerPubKey: { isRevealed: false, isOwnerID: SEMAPHORE_V4 }
         }
       }
     }
